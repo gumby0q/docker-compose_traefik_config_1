@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  # =============================================================================>>>
+  # bootstrap is bugfix container for traefik /data/acme.json
+  # https://github.com/traefik/traefik-helm-chart/issues/164#issuecomment-811858211
+  bootstrap:
+    image: busybox:1.31.1
+    command: ["sh", "-c", "install -m 600 /dev/null /data/acme.json",]
+    container_name: bootstrap
+    volumes:
+      - ./data:/data
+  # =============================================================================<<<
+
+  traefik:
+    depends_on:
+      - bootstrap # bootstrap is bugfix container for traefik /data/acme.json
+    image: traefik:v2.5
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 80:80
+      - 443:443 
+      - 8080:8080 
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik.yml:/traefik.yml:ro
+      - ./data/custom/:/custom/:ro
+      - ./data/acme.json:/acme.json
+    labels:
+      - "traefik.enable=true"
+      - "--log.level=DEBUG"
+    env_file:
+      - .env
+    networks:
+      - proxy
+
+#Docker Networks
+networks:
+  proxy:
+    external:
+      name: "traefik_proxy"
