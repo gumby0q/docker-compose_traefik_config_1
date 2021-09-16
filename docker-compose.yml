@@ -6,7 +6,8 @@ services:
   # https://github.com/traefik/traefik-helm-chart/issues/164#issuecomment-811858211
   bootstrap:
     image: busybox:1.31.1
-    command: ["sh", "-c", "install -m 600 /dev/null /data/acme.json",]
+    # creates data/acme.json before docker shares it as volume (as folder) in the case the file doesn't exist.
+    command: ["sh", "-c", "if [ -e /data/acme.json ]; then echo \"ok\"; else  echo \"nok\"; install -m 600 /dev/null /data/acme.json; fi"]
     container_name: bootstrap
     volumes:
       - ./data:/data
