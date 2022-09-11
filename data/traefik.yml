@@ -20,9 +20,9 @@ providers:
     exposedByDefault: false
     watch: true
 
-  file:
-    directory: /custom
-    watch: true
+  # file:
+  #   directory: /custom
+  #   watch: true
 
 certificatesResolvers:
   letsEncrypt:

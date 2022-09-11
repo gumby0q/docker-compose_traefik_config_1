@@ -1,43 +1,106 @@
-version: "3"
+# version: "3"
+
+version: "3.3"
 
 services:
   # =============================================================================>>>
   # bootstrap is bugfix container for traefik /data/acme.json
   # https://github.com/traefik/traefik-helm-chart/issues/164#issuecomment-811858211
-  bootstrap:
-    image: busybox:1.31.1
-    # creates data/acme.json before docker shares it as volume (as folder) in the case the file doesn't exist.
-    command: ["sh", "-c", "if [ -e /data/acme.json ]; then echo \"ok\"; else  echo \"nok\"; install -m 600 /dev/null /data/acme.json; fi"]
-    container_name: bootstrap
-    volumes:
-      - ./data:/data
+  # bootstrap:
+  #   image: busybox:1.31.1
+  #   # creates data/acme.json before docker shares it as volume (as folder) in the case the file doesn't exist.
+  #   command: ["sh", "-c", "if [ -e /data/acme.json ]; then echo \"ok\"; else  echo \"nok\"; install -m 600 /dev/null /data/acme.json; fi"]
+  #   container_name: bootstrap
+  #   volumes:
+  #     - ./data:/data
   # =============================================================================<<<
 
   traefik:
-    depends_on:
-      - bootstrap # bootstrap is bugfix container for traefik /data/acme.json
-    image: traefik:v2.5
+    # depends_on:
+    #   - bootstrap # bootstrap is bugfix container for traefik /data/acme.json
+    image: traefik:v2.6
     container_name: traefik
     restart: unless-stopped
+
+    # command:
+    #   - "--log.level=DEBUG"
+    #   - "--api.insecure=true"
+    #   - "--providers.docker=true"
+    #   - "--providers.docker.exposedbydefault=false"
+    #   - "--entrypoints.web.address=:80"
+
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.myweb.address=:3333"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=anatolii@liniad.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+    # volumes:
+    #   - /var/run/docker.sock:/var/run/docker.sock:ro
+    #   - /etc/localtime:/etc/localtime:ro
+    #   # - ./data/traefik.yml:/traefik.yml:ro
+    #   # - ./data/custom/:/custom/:ro
+    #   - ./data/acme.json:/acme.json
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "3333:3333"
+
     security_opt:
       - no-new-privileges:true
-    ports:
-      - 80:80
-      - 443:443 
-      - 8080:8080 
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data/traefik.yml:/traefik.yml:ro
-      - ./data/custom/:/custom/:ro
-      - ./data/acme.json:/acme.json
-    labels:
-      - "traefik.enable=true"
-      - "--log.level=DEBUG"
+
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "--log.level=DEBUG"
     env_file:
       - .env
     networks:
       - proxy
+
+
+
+    # labels:
+    #   - "traefik.enable=true"
+    #   # - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
+    #   # - "traefik.http.routers.whoami.entrypoints=websecure"
+    #   # - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+    #   - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+    #   - "traefik.http.routers.whoami.entrypoints=web"
+    #   - "traefik.http.services.whoami.loadbalancer.server.port=80"
+    # ports:
+    #   - "80"
+
+  # whoami:
+  #   image: "traefik/whoami"
+  #   container_name: "simple-service1"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     # - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
+  #     # - "traefik.http.routers.whoami.entrypoints=websecure"
+  #     # - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+  #     - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+  #     - "traefik.http.routers.whoami.entrypoints=myweb"
+  #     # - "traefik.http.services.whoami.loadbalancer.server.port=80"
+  #   # ports:
+  #   #   - "80"
+  #   #   - "23123:80"
+
+  #   networks:
+  #     - proxy
 
 #Docker Networks
 networks:
