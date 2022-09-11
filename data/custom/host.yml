@@ -1,32 +1,32 @@
-http:
-  routers:
-    # https://github.com/traefik/traefik/issues/4863#issuecomment-533375677
-    my-router-http:
-      entryPoints: 
-        - web
-      middlewares: # comment to dissable redirections
-        - force-redirect-to-https
-      service: metrics_server
-      rule: "Host(`{{env "DOMAIN_NAME"}}`)"
+# http:
+#   routers:
+#     # https://github.com/traefik/traefik/issues/4863#issuecomment-533375677
+#     my-router-http:
+#       entryPoints: 
+#         - web
+#       middlewares: # comment to dissable redirections
+#         - force-redirect-to-https
+#       service: metrics_server
+#       rule: "Host(`{{env "DOMAIN_NAME"}}`)"
 
-    my-router-https:
-      entryPoints: 
-        - websecure
-      service: metrics_server
-      rule: "Host(`{{env "DOMAIN_NAME"}}`)"
-      tls:
-        certResolver: letsEncrypt
+#     my-router-https:
+#       entryPoints: 
+#         - websecure
+#       service: metrics_server
+#       rule: "Host(`{{env "DOMAIN_NAME"}}`)"
+#       tls:
+#         certResolver: letsEncrypt
 
-  middlewares:
-    force-redirect-to-https:
-      redirectScheme:
-        scheme: https
-        permanent: true
+#   middlewares:
+#     force-redirect-to-https:
+#       redirectScheme:
+#         scheme: https
+#         permanent: true
 
-  services:
-    metrics_server:  
-      loadBalancer:
-        servers:
-        # - url: http://192.168.0.106:3000/
-        - url: {{env "FORWARDING_SERVER_IP"}}
-        passHostHeader: true
+#   services:
+#     metrics_server:  
+#       loadBalancer:
+#         servers:
+#         # - url: http://192.168.0.106:3000/
+#         - url: {{env "FORWARDING_SERVER_IP"}}
+#         passHostHeader: true
